@@ -420,8 +420,10 @@ public class MmsDatabase extends Database {
   }
 	
   public Cursor getCarrierMmsInformation() {
-    Uri uri          = Uri.withAppendedPath(Uri.parse("content://telephony/carriers"), "current");
-    String selection = "type = 'mms'";
+    //Uri uri          = Uri.withAppendedPath(Uri.parse("content://telephony/carriers"), "current");
+
+    Uri uri          = Uri.parse("content://telephony/carriers");
+    String selection = "type = 'mms' OR current = 1";
 		
     return context.getContentResolver().query(uri, null, selection, null, null);    
   }

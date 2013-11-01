@@ -1,7 +1,7 @@
 TextSecure
 =================
 
-An secure text messaging application for Android.
+A secure text messaging application for Android.
 
 TextSecure is a replacement for the standard text messaging application, allowing you to send and receive text messages as normal.  Additionally, TextSecure provides:
 
@@ -31,6 +31,20 @@ Have a question? Ask on our mailing list!
 whispersystems@lists.riseup.net
 
 https://lists.riseup.net/www/info/whispersystems
+
+Translation
+------------
+
+Interested in helping to translate TextSecure? Contribute here:
+
+https://www.transifex.com/projects/p/textsecure-official/
+
+Downloads
+------------
+
+TextSecure can be downloaded from the Play Store here:
+
+https://play.google.com/store/apps/details?id=org.thoughtcrime.securesms
 
 Cryptography Notice
 ------------

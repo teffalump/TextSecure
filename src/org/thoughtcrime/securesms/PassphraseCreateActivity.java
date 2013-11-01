@@ -1,6 +1,6 @@
-/** 
+/**
  * Copyright (C) 2011 Whisper Systems
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -10,118 +10,119 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.thoughtcrime.securesms;
 
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Toast;
+
 import org.thoughtcrime.securesms.crypto.IdentityKeyUtil;
 import org.thoughtcrime.securesms.crypto.MasterSecret;
 import org.thoughtcrime.securesms.crypto.MasterSecretUtil;
 import org.thoughtcrime.securesms.util.MemoryCleaner;
-
-import android.app.ProgressDialog;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.view.View;
-import android.view.Window;
-import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
+import org.thoughtcrime.securesms.util.Util;
+import org.thoughtcrime.securesms.util.VersionTracker;
 
 /**
  * Activity for creating a user's local encryption passphrase.
- * 
+ *
  * @author Moxie Marlinspike
  */
+
 public class PassphraseCreateActivity extends PassphraseActivity {
 
-  private EditText	   passphraseEdit;
-  private EditText	   passphraseRepeatEdit;
-  private Button       okButton;
-  private Button       cancelButton;
-	
-  public PassphraseCreateActivity() {	}
+  private LinearLayout createLayout;
+  private LinearLayout progressLayout;
+
+  private EditText passphraseEdit;
+  private EditText passphraseRepeatEdit;
+  private Button   okButton;
+
+  public PassphraseCreateActivity() { }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+
     setContentView(R.layout.create_passphrase_activity);
-		
+
     initializeResources();
   }
-	
+
   private void initializeResources() {
-    this.passphraseEdit       = (EditText) findViewById(R.id.passphrase_edit);
-    this.passphraseRepeatEdit = (EditText) findViewById(R.id.passphrase_edit_repeat);
-    this.okButton             = (Button) findViewById(R.id.ok_button);
-    this.cancelButton         = (Button) findViewById(R.id.cancel_button);
-		
-    this.okButton.setOnClickListener(new OkButtonClickListener());
-    this.cancelButton.setOnClickListener(new CancelButtonClickListener());
+    this.createLayout         = (LinearLayout)findViewById(R.id.create_layout);
+    this.progressLayout       = (LinearLayout)findViewById(R.id.progress_layout);
+    this.passphraseEdit       = (EditText)    findViewById(R.id.passphrase_edit);
+    this.passphraseRepeatEdit = (EditText)    findViewById(R.id.passphrase_edit_repeat);
+    this.okButton             = (Button)      findViewById(R.id.ok_button);
+
+    this.okButton.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        verifyAndSavePassphrases();
+      }
+    });
   }
-	
+
   private void verifyAndSavePassphrases() {
+    if (Util.isEmpty(this.passphraseEdit) || Util.isEmpty(this.passphraseRepeatEdit)) {
+      Toast.makeText(this, R.string.PassphraseCreateActivity_you_must_specify_a_password, Toast.LENGTH_SHORT).show();
+      return;
+    }
+
     String passphrase       = this.passphraseEdit.getText().toString();
     String passphraseRepeat = this.passphraseRepeatEdit.getText().toString();
-		
+
     if (!passphrase.equals(passphraseRepeat)) {
-      Toast.makeText(getApplicationContext(), "Passphrases Don't Match!", Toast.LENGTH_SHORT).show();
+      Toast.makeText(this, R.string.PassphraseCreateActivity_passphrases_dont_match, Toast.LENGTH_SHORT).show();
       this.passphraseEdit.setText("");
       this.passphraseRepeatEdit.setText("");
-    } else {
-      MasterSecret masterSecret = MasterSecretUtil.generateMasterSecret(this, passphrase);
-      MemoryCleaner.clean(passphrase); // We do this, but the edit boxes are basically impossible to clean up.
-      MemoryCleaner.clean(passphraseRepeat);
-      new AsymmetricSecretGenerator(masterSecret).generate();
+      return;
     }
+
+    // We do this, but the edit boxes are basically impossible to clean up.
+    MemoryCleaner.clean(passphraseRepeat);
+    new SecretGenerator().execute(passphrase);
   }
-	
-  private class AsymmetricSecretGenerator extends Handler implements Runnable {
-    private ProgressDialog progressDialog;
-    private MasterSecret masterSecret;
-		
-    public AsymmetricSecretGenerator(MasterSecret masterSecret) {
-      this.masterSecret = masterSecret;
+
+  private class SecretGenerator extends AsyncTask<String, Void, Void> {
+    private MasterSecret   masterSecret;
+
+    @Override
+    protected void onPreExecute() {
+      createLayout.setVisibility(View.GONE);
+      progressLayout.setVisibility(View.VISIBLE);
     }
-		
-    public void run() {
+
+    @Override
+    protected Void doInBackground(String... params) {
+      String passphrase = params[0];
+      masterSecret      = MasterSecretUtil.generateMasterSecret(PassphraseCreateActivity.this,
+                                                                passphrase);
+
+      // We do this, but the edit boxes are basically impossible to clean up.
+      MemoryCleaner.clean(passphrase);
+
       MasterSecretUtil.generateAsymmetricMasterSecret(PassphraseCreateActivity.this, masterSecret);
       IdentityKeyUtil.generateIdentityKeys(PassphraseCreateActivity.this, masterSecret);
-      this.obtainMessage().sendToTarget();
+      VersionTracker.updateLastSeenVersion(PassphraseCreateActivity.this);
+
+      return null;
     }
-		
-    public void generate() {
-      progressDialog = new ProgressDialog(PassphraseCreateActivity.this);
-      progressDialog.setTitle("Generating KeyPair");
-      progressDialog.setMessage("Generating a local encryption keypair...");
-      progressDialog.setCancelable(false);
-      progressDialog.setIndeterminate(true);
-      progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-      progressDialog.show();
-      new Thread(this).start();			
-    }
-		
+
     @Override
-    public void handleMessage(Message message) {
-      progressDialog.dismiss();
+    protected void onPostExecute(Void param) {
       setMasterSecret(masterSecret);
-    }
-  }
-	
-  private class CancelButtonClickListener implements OnClickListener {
-    public void onClick(View v) {	
-      finish();
-    }
-  }
-	
-  private class OkButtonClickListener implements OnClickListener {
-    public void onClick(View v) {
-      verifyAndSavePassphrases();
     }
   }
 

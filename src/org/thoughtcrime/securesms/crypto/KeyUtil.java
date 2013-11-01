@@ -29,9 +29,9 @@ import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.math.ec.ECPoint;
-import org.thoughtcrime.securesms.database.LocalKeyRecord;
-import org.thoughtcrime.securesms.database.RemoteKeyRecord;
-import org.thoughtcrime.securesms.database.SessionRecord;
+import org.thoughtcrime.securesms.database.keys.LocalKeyRecord;
+import org.thoughtcrime.securesms.database.keys.RemoteKeyRecord;
+import org.thoughtcrime.securesms.database.keys.SessionRecord;
 import org.thoughtcrime.securesms.recipients.Recipient;
 
 import android.content.Context;
@@ -90,6 +90,14 @@ public class KeyUtil {
       (LocalKeyRecord.hasRecord(context, recipient))  &&
       (RemoteKeyRecord.hasRecord(context, recipient)) &&
       (SessionRecord.hasSession(context, recipient));
+  }
+
+  public static boolean isIdentityKeyFor(Context context,
+                                         MasterSecret masterSecret,
+                                         Recipient recipient)
+  {
+    return isSessionFor(context, recipient) &&
+        new SessionRecord(context, masterSecret, recipient).getIdentityKey() != null;
   }
 	
   public static LocalKeyRecord initializeRecordFor(Recipient recipient, Context context, MasterSecret masterSecret) {

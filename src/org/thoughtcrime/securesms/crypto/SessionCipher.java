@@ -33,11 +33,11 @@ import javax.crypto.spec.SecretKeySpec;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
-import org.thoughtcrime.securesms.database.InvalidKeyIdException;
-import org.thoughtcrime.securesms.database.LocalKeyRecord;
-import org.thoughtcrime.securesms.database.RemoteKeyRecord;
-import org.thoughtcrime.securesms.database.SessionKey;
-import org.thoughtcrime.securesms.database.SessionRecord;
+import org.thoughtcrime.securesms.database.keys.InvalidKeyIdException;
+import org.thoughtcrime.securesms.database.keys.LocalKeyRecord;
+import org.thoughtcrime.securesms.database.keys.RemoteKeyRecord;
+import org.thoughtcrime.securesms.database.keys.SessionKey;
+import org.thoughtcrime.securesms.database.keys.SessionRecord;
 import org.thoughtcrime.securesms.protocol.Message;
 import org.thoughtcrime.securesms.recipients.Recipient;
 import org.thoughtcrime.securesms.util.Conversions;
@@ -53,7 +53,7 @@ import android.util.Log;
 
 public class SessionCipher {
 	
-  public static Object CIPHER_LOCK = new Object();
+  public static final Object CIPHER_LOCK = new Object();
 	
   public static final int CIPHER_KEY_LENGTH = 16;
   public static final int MAC_KEY_LENGTH    = 20;
@@ -79,11 +79,13 @@ public class SessionCipher {
   public byte[] encryptMessage(byte[] messageText) {
     Log.w("SessionCipher", "Encrypting message...");
     try {
-      SessionKey sessionKey   = getSessionKey(Cipher.ENCRYPT_MODE, localRecord.getCurrentKeyPair().getId(), remoteRecord.getCurrentRemoteKey().getId());
-      byte[] paddedMessage    = transportDetails.getPaddedMessageBody(messageText);
-      byte[] cipherText       = getCiphertext(paddedMessage, sessionKey.getCipherKey());
-      byte[] message          = buildMessageFromCiphertext(cipherText);
-      byte[] messageWithMac   = MessageMac.buildMessageWithMac(message, sessionKey.getMacKey());
+      int localId           = localRecord.getCurrentKeyPair().getId();
+      int remoteId          = remoteRecord.getCurrentRemoteKey().getId();
+      SessionKey sessionKey = getSessionKey(Cipher.ENCRYPT_MODE, localId, remoteId);
+      byte[]paddedMessage   = transportDetails.getPaddedMessageBody(messageText);
+      byte[]cipherText      = getCiphertext(paddedMessage, sessionKey.getCipherKey());
+      byte[]message         = buildMessageFromCiphertext(cipherText);
+      byte[]messageWithMac  = MessageMac.buildMessageWithMac(message, sessionKey.getMacKey());
 
       sessionRecord.setSessionKey(sessionKey);
       sessionRecord.incrementCounter();

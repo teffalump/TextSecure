@@ -1,28 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Activity background color -->
-    <drawable name="class_zero_background">#7f040000</drawable>
 
-    <!-- Widget background -->
-    <drawable name="light_blue_background">#ffecfbff</drawable>
-    <drawable name="white_background">#ffffffff</drawable>
-    <drawable name="alert_background">#f0777700</drawable>
+    <color name="white">#ffffffff</color>
+    <color name="black">#ff000000</color>
 
-    <!-- text color -->
-    <drawable name="text_color">#ffffffff</drawable>
-    <drawable name="text_color_red">#ffff0000</drawable>
-    <drawable name="text_color_black">#ff000000</drawable>
-    <drawable name="text_color_offwhite">#55ffffff</drawable>
+    <color name="conversation_list_item_background_read_light">#ffeeeeee</color>
+    <color name="conversation_list_item_background_unread_light">#ffffffff</color>
+    <color name="conversation_list_item_background_read_dark">#ff000000</color>
+    <color name="conversation_list_item_background_unread_dark">#ff333333</color>
 
-    <!-- Chat "sent time" text background -->
-    <color name="timestamp_color">#bf000000</color>
-    
-    <!-- For dark theme -->
-    <drawable name="lightgrey_background">#ff2f2f2f</drawable>
-    <drawable name="softgrey_background">#ff181818</drawable>
+    <color name="textsecure_holo_blue_light">#ff33b5e5</color>
 
-    <!-- the background color used for unread conversation -->
-    <color name="light_list_bgcolor">#ffeeeeee</color>
-    
-    
 </resources>
